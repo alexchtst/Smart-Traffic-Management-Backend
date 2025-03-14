@@ -14,7 +14,7 @@ def cobaPredcit() -> list:
     except Exception as e:
         print("error happened", str(e))
         return {
-            data: [{
+            "data": [{
                 'date': '2025-03-04',
                 'val': -1
             }]
@@ -35,7 +35,7 @@ def data_event(socketio):
             print(len(crowdData), "has been sent")
             
             socketio.emit("crowd-realtime", {
-                "data": crowdData
+                "data": crowdData[-25:]
             })
             
             predicted_data = cobaPredcit()
