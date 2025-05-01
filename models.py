@@ -25,27 +25,42 @@ class User(db.Model):
 
 class Region(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    location = db.Column(db.String(255), nullable=False)
-    passkey = db.Column(db.String(128), nullable=False)
+    name = db.Column(db.String(128), nullable=False)
+    lat = db.Column(db.Integer, nullable=False)
+    long = db.Column(db.Integer, nullable=False)
+    guard_post = db.relationship('GuardPost')
     
     def todict(self):
         return {
             'id': self.id,
-            'location': self.location,
-            'passkey': self.passkey
+            'name': self.name,
+            'location': [self.lat, self.long],
+            'lat': self.lat,
+            'long': self.long
         }
 
 class GuardPost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
+    lat = db.Column(db.Integer, nullable=False)
+    long = db.Column(db.Integer, nullable=False)
+    
+    region_id = db.Column(
+        db.Integer,
+        db.ForeignKey('region.id', ondelete='CASCADE'),
+        nullable=False
+    )
     
     def todict(self):
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
+            'location': [self.lat, self.long],
+            'lat': self.lat,
+            'long': self.long
         }
 
-class Crowded(db.Model):
+class Crowded(db.Model):    
     id = db.Column(db.Integer, primary_key=True)
     time_detect = db.Column(db.String(255), nullable=False)
     vehicle_number = db.Column(db.Integer, nullable=False)
