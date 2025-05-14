@@ -63,32 +63,41 @@ def data_event(socketio):
             }, room=None)
             
             print('error happened', str(e))
-    
+
     @socketio.on('video_frame')
     def handle_video_frame(data):
         try:
-            # Data dikirim dari browser sebagai base64
             frame_data = data['image']
-            # Hilangkan header data:image/...;base64,
             encoded_data = frame_data.split(',')[1]
             img_bytes = base64.b64decode(encoded_data)
             img_array = np.frombuffer(img_bytes, dtype=np.uint8)
             img = cv2.imdecode(img_array, flags=cv2.IMREAD_COLOR)
 
-            # Jalankan deteksi dengan YOLO
             results = model(img)
 
-            # Ambil bounding box dan label
             detections = []
             for box in results[0].boxes:
                 detections.append({
                     'class': int(box.cls[0]),
                     'confidence': float(box.conf[0]),
-                    'bbox': box.xyxy[0].tolist()
+                    'bbox': [float(x) for x in box.xyxy[0]]
                 })
 
-            # Kirim hasil ke klien
-            socketio.emit('detection_result', {'detections': detections})
-            
+            # Anotasi opsional
+            annotated = results[0].plot()
+            _, buffer = cv2.imencode('.jpg', annotated)
+            annotated_b64 = base64.b64encode(buffer).decode('utf-8')
+
+            # Kirim hasil deteksi ke klien yang memicu event
+            socketio.emit(
+                'detection_result',
+                {
+                    'detections': detections,
+                    'annotated_frame': 'data:image/jpeg;base64,' + annotated_b64
+                },
+                to=request.sid  # Kirim hanya ke klien yang memicu event
+            )
+
         except Exception as e:
             print(f"Error dalam frame processing: {str(e)}")
+        
